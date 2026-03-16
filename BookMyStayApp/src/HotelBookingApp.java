@@ -8,39 +8,69 @@ class Reservation {
         this.guestName = guestName;
         this.roomType = roomType;
     }
+}
 
-    void display() {
-        System.out.println("Guest: " + guestName + " | Room Type: " + roomType);
+class InventoryService {
+    private Map<String, Integer> inventory = new HashMap<>();
+
+    void addRoomType(String type, int count) {
+        inventory.put(type, count);
+    }
+
+    int getAvailability(String type) {
+        return inventory.getOrDefault(type, 0);
+    }
+
+    void decrement(String type) {
+        inventory.put(type, inventory.get(type) - 1);
     }
 }
 
-class BookingRequestQueue {
-    private Queue<Reservation> queue = new LinkedList<>();
+class BookingService {
+    private Queue<Reservation> requestQueue;
+    private InventoryService inventoryService;
+    private Map<String, Set<String>> allocatedRooms = new HashMap<>();
+    private int idCounter = 1;
 
-    void addRequest(Reservation r) {
-        queue.add(r);
+    BookingService(Queue<Reservation> requestQueue, InventoryService inventoryService) {
+        this.requestQueue = requestQueue;
+        this.inventoryService = inventoryService;
     }
 
-    void showRequests() {
-        for (Reservation r : queue) {
-            r.display();
+    void processBookings() {
+        while (!requestQueue.isEmpty()) {
+            Reservation r = requestQueue.poll();
+            String type = r.roomType;
+
+            if (inventoryService.getAvailability(type) > 0) {
+                String roomId = type.substring(0,1).toUpperCase() + idCounter++;
+                allocatedRooms.putIfAbsent(type, new HashSet<>());
+
+                if (!allocatedRooms.get(type).contains(roomId)) {
+                    allocatedRooms.get(type).add(roomId);
+                    inventoryService.decrement(type);
+                    System.out.println("Reservation Confirmed for " + r.guestName + " | Room ID: " + roomId + " | Type: " + type);
+                }
+            } else {
+                System.out.println("No rooms available for " + r.guestName + " | Type: " + type);
+            }
         }
     }
 }
 
 public class HotelBookingApp {
     public static void main(String[] args) {
-        BookingRequestQueue requestQueue = new BookingRequestQueue();
+        Queue<Reservation> requestQueue = new LinkedList<>();
 
-        Reservation r1 = new Reservation("Alice", "Single");
-        Reservation r2 = new Reservation("Bob", "Double");
-        Reservation r3 = new Reservation("Charlie", "Suite");
+        requestQueue.add(new Reservation("Alice", "Single"));
+        requestQueue.add(new Reservation("Bob", "Double"));
+        requestQueue.add(new Reservation("Charlie", "Single"));
 
-        requestQueue.addRequest(r1);
-        requestQueue.addRequest(r2);
-        requestQueue.addRequest(r3);
+        InventoryService inventory = new InventoryService();
+        inventory.addRoomType("Single", 2);
+        inventory.addRoomType("Double", 1);
 
-        System.out.println("Booking Requests in Queue (FIFO Order):");
-        requestQueue.showRequests();
+        BookingService bookingService = new BookingService(requestQueue, inventory);
+        bookingService.processBookings();
     }
 }
