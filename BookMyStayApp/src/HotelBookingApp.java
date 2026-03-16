@@ -1,79 +1,46 @@
 import java.util.*;
 
-class Room {
-    String type;
-    double price;
-    String amenities;
+class Reservation {
+    String guestName;
+    String roomType;
 
-    Room(String type, double price, String amenities) {
-        this.type = type;
-        this.price = price;
-        this.amenities = amenities;
+    Reservation(String guestName, String roomType) {
+        this.guestName = guestName;
+        this.roomType = roomType;
     }
 
     void display() {
-        System.out.println("Room Type: " + type);
-        System.out.println("Price: " + price);
-        System.out.println("Amenities: " + amenities);
-        System.out.println();
+        System.out.println("Guest: " + guestName + " | Room Type: " + roomType);
     }
 }
 
-class Inventory {
-    private Map<String, Integer> availability = new HashMap<>();
+class BookingRequestQueue {
+    private Queue<Reservation> queue = new LinkedList<>();
 
-    void addRoom(String type, int count) {
-        availability.put(type, count);
+    void addRequest(Reservation r) {
+        queue.add(r);
     }
 
-    int getAvailability(String type) {
-        return availability.getOrDefault(type, 0);
-    }
-
-    Set<String> getRoomTypes() {
-        return availability.keySet();
-    }
-}
-
-class SearchService {
-    Inventory inventory;
-    Map<String, Room> rooms;
-
-    SearchService(Inventory inventory, Map<String, Room> rooms) {
-        this.inventory = inventory;
-        this.rooms = rooms;
-    }
-
-    void searchRooms() {
-        for (String type : inventory.getRoomTypes()) {
-            int available = inventory.getAvailability(type);
-            if (available > 0) {
-                Room r = rooms.get(type);
-                r.display();
-                System.out.println("Available: " + available);
-                System.out.println("----------------------");
-            }
+    void showRequests() {
+        for (Reservation r : queue) {
+            r.display();
         }
     }
 }
 
 public class HotelBookingApp {
     public static void main(String[] args) {
-        Inventory inventory = new Inventory();
+        BookingRequestQueue requestQueue = new BookingRequestQueue();
 
-        inventory.addRoom("Single", 3);
-        inventory.addRoom("Double", 0);
-        inventory.addRoom("Suite", 2);
+        Reservation r1 = new Reservation("Alice", "Single");
+        Reservation r2 = new Reservation("Bob", "Double");
+        Reservation r3 = new Reservation("Charlie", "Suite");
 
-        Map<String, Room> rooms = new HashMap<>();
+        requestQueue.addRequest(r1);
+        requestQueue.addRequest(r2);
+        requestQueue.addRequest(r3);
 
-        rooms.put("Single", new Room("Single", 2000, "WiFi, TV"));
-        rooms.put("Double", new Room("Double", 3500, "WiFi, TV, AC"));
-        rooms.put("Suite", new Room("Suite", 6000, "WiFi, TV, AC, Mini Bar"));
-
-        SearchService service = new SearchService(inventory, rooms);
-
-        System.out.println("Available Rooms:");
-        service.searchRooms();
+        System.out.println("Booking Requests in Queue (FIFO Order):");
+        requestQueue.showRequests();
     }
 }
