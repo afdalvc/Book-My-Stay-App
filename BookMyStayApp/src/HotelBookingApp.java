@@ -1,56 +1,58 @@
 import java.util.*;
 
-class Reservation {
-    String reservationId;
-    String guestName;
-    String roomType;
-
-    Reservation(String reservationId, String guestName, String roomType) {
-        this.reservationId = reservationId;
-        this.guestName = guestName;
-        this.roomType = roomType;
-    }
-
-    void display() {
-        System.out.println("Reservation ID: " + reservationId + " | Guest: " + guestName + " | Room Type: " + roomType);
+class InvalidBookingException extends Exception {
+    InvalidBookingException(String message) {
+        super(message);
     }
 }
 
-class BookingHistory {
-    private List<Reservation> history = new ArrayList<>();
+class Inventory {
+    private Map<String, Integer> rooms = new HashMap<>();
 
-    void addReservation(Reservation r) {
-        history.add(r);
+    void addRoomType(String type, int count) {
+        rooms.put(type, count);
     }
 
-    List<Reservation> getHistory() {
-        return history;
-    }
-}
-
-class BookingReportService {
-    void generateReport(List<Reservation> reservations) {
-        System.out.println("Booking History Report");
-        for (Reservation r : reservations) {
-            r.display();
+    void bookRoom(String type) throws InvalidBookingException {
+        if (!rooms.containsKey(type)) {
+            throw new InvalidBookingException("Invalid room type: " + type);
         }
-        System.out.println("Total Bookings: " + reservations.size());
+
+        int available = rooms.get(type);
+
+        if (available <= 0) {
+            throw new InvalidBookingException("No rooms available for type: " + type);
+        }
+
+        rooms.put(type, available - 1);
+        System.out.println("Room booked successfully for type: " + type);
+    }
+}
+
+class BookingValidator {
+    static void validateRoomType(String type) throws InvalidBookingException {
+        if (type == null || type.isEmpty()) {
+            throw new InvalidBookingException("Room type cannot be empty");
+        }
     }
 }
 
 public class HotelBookingApp {
     public static void main(String[] args) {
-        BookingHistory bookingHistory = new BookingHistory();
+        Inventory inventory = new Inventory();
 
-        Reservation r1 = new Reservation("R101", "Alice", "Single");
-        Reservation r2 = new Reservation("R102", "Bob", "Double");
-        Reservation r3 = new Reservation("R103", "Charlie", "Suite");
+        inventory.addRoomType("Single", 2);
+        inventory.addRoomType("Double", 1);
 
-        bookingHistory.addReservation(r1);
-        bookingHistory.addReservation(r2);
-        bookingHistory.addReservation(r3);
+        String[] requests = {"Single", "Suite", "Double", "Double"};
 
-        BookingReportService reportService = new BookingReportService();
-        reportService.generateReport(bookingHistory.getHistory());
+        for (String type : requests) {
+            try {
+                BookingValidator.validateRoomType(type);
+                inventory.bookRoom(type);
+            } catch (InvalidBookingException e) {
+                System.out.println("Booking Failed: " + e.getMessage());
+            }
+        }
     }
 }
